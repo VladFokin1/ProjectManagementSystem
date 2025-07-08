@@ -27,17 +27,17 @@ namespace ProjectManagementSystem.Core.Services
 
         public IEnumerable<User> GetAllUsers()
         {
-            throw new NotImplementedException();
+            return _userRepository.GetAll();
         }
 
         public User GetByLogin(string login)
         {
-            throw new NotImplementedException();
+            return _userRepository.GetByLogin(login);
         }
 
         public User GetUser(int userId)
         {
-            throw new NotImplementedException();
+            return _userRepository.GetById(userId);
         }
 
         public User Register(string login, string password, Role role)

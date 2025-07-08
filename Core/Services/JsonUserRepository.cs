@@ -50,15 +50,7 @@ namespace ProjectManagementSystem.Core.Services
                     var emptyJson = JsonSerializer.Serialize(_users);
                     File.WriteAllText(_filePath, _encryptor.Encrypt(emptyJson));
 
-                    // Создаем администратора по умолчанию
-                    var admin = new Manager
-                    {
-                        Id = 1,
-                        Login = "admin",
-                        PasswordHash = _passwordHasher.Hash("admin123") // Хешируем пароль!
-                    };
-
-                    _users.Add(admin);
+                    
                     Save();
                     return;
                 }
@@ -66,6 +58,15 @@ namespace ProjectManagementSystem.Core.Services
                 var encryptedJson = File.ReadAllText(_filePath);
                 var json = _encryptor.Decrypt(encryptedJson);
                 _users = JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
+                // Создаем администратора по умолчанию
+                var admin = new Manager
+                {
+                    Id = 1,
+                    Login = "admin",
+                    PasswordHash = _passwordHasher.Hash("admin123") // Хешируем пароль!
+                };
+
+                _users.Add(admin);
             }
             catch (Exception ex)
             {
@@ -148,10 +149,10 @@ namespace ProjectManagementSystem.Core.Services
                     var json = JsonSerializer.Serialize(_users, options);
                     var encryptedJson = _encryptor.Encrypt(json);
 
-                    // Atomic write (write to temp file then replace)
                     var tempFile = Path.GetTempFileName();
-                    File.WriteAllText(tempFile, encryptedJson);
-                    File.Replace(tempFile, _filePath, null);
+                    File.WriteAllText(_filePath + ".tmp", encryptedJson);
+                    File.Delete(_filePath);
+                    File.Move(_filePath + ".tmp", _filePath);
                 }
                 catch (Exception ex)
                 {

@@ -8,6 +8,7 @@ using ProjectManagementSystem.Core.Entities;
 using ProjectManagementSystem.Core.Exceptions;
 using System.Text;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
 namespace ProjectManagementSystem
 {
@@ -56,13 +57,22 @@ namespace ProjectManagementSystem
                         Console.Write("\nВведите команду: ");
                         var commandName = Console.ReadLine();
 
+                        if (string.Equals(commandName, "logout", StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentUser = null; // Сбрасываем авторизацию
+                            continue;
+                        }
+
+
+                        if (string.Equals(commandName, "exit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            break;
+                        }
+
                         var command = commandRegistry.GetCommand(commandName);
                         if (command != null)
                         {
-                            if (string.Equals(commandName, "exit", StringComparison.OrdinalIgnoreCase))
-                            {
-                                break;
-                            }
+                            
 
                             // Проверка прав доступа
                             if (command.RequiredRole != Role.Any &&
@@ -99,24 +109,17 @@ namespace ProjectManagementSystem
         {
             var services = new ServiceCollection();
 
-            // Регистрация команд
-            services.AddTransient<ICommand, CreateTaskCommand>();
-            services.AddTransient<ICommand, RegisterUserCommand>();
 
-            // Регистрируем реестр команд
-            services.AddSingleton<CommandRegistry>(provider =>
-                new CommandRegistry(provider.GetServices<ICommand>()));
 
-            // Регистрация процессора команд
-            services.AddSingleton<CommandProcessor>();
+
 
             // Регистрация зависимостей
+            services.AddSingleton<ILogger, FileLogger>();
             services.AddSingleton<IAuthenticator, DatabaseAuthenticator>();
             services.AddSingleton<IUserRepository, JsonUserRepository>();
             services.AddSingleton<ITaskRepository, JsonTaskRepository>();
             services.AddSingleton<ITaskService, TaskService>();
             services.AddSingleton<IUserService, UserService>();
-            services.AddSingleton<ILogger, FileLogger>();
             services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
             var encryptionKey = Encoding.UTF8.GetBytes("16-char-key-1234"); //хранить так небезопасно
@@ -131,9 +134,34 @@ namespace ProjectManagementSystem
                 return new JsonUserRepository(filePath, encryptor, provider.GetService<IPasswordHasher>());
             });
 
+            services.AddSingleton<ITaskRepository>(provider =>
+                new JsonTaskRepository(
+                    "tasks.json", provider.GetRequiredService<IDataEncryptor>(), 
+                    provider.GetService<IPasswordHasher>()
+                    ));
+
+            var commandTypes = Assembly.GetExecutingAssembly()
+                                       .GetTypes()
+                                       .Where(t => typeof(ICommand).IsAssignableFrom(t) && !t.IsInterface);
 
 
-            return services.BuildServiceProvider();
+            //регистрация команд
+            foreach (var type in commandTypes)
+            {
+                services.AddTransient(type);
+                services.AddTransient<ICommand>(provider =>
+                    (ICommand)provider.GetRequiredService(type));
+            }
+
+            services.AddSingleton<CommandRegistry>(provider =>
+            {
+                var commands = provider.GetServices<ICommand>();
+                return new CommandRegistry(commands);
+            });
+            // Регистрация процессора команд
+            services.AddSingleton<CommandProcessor>();
+
+            return services.BuildServiceProvider(); 
         }
 
         private static string ReadPassword()

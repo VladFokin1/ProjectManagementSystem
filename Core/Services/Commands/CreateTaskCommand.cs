@@ -11,20 +11,63 @@ namespace ProjectManagementSystem.Core.Services.Commands
 {
     internal class CreateTaskCommand : ICommand
     {
-        public string Name => throw new NotImplementedException();
+        public string Name => "create-task";
+        public string Description => "Cоздать задачу";
+        public Role RequiredRole => Role.Manager;
 
-        public string Description => throw new NotImplementedException();
+        private readonly ITaskService _taskService;
+        private readonly IUserRepository _userRepository;
 
-        public Role RequiredRole => throw new NotImplementedException();
+        public CreateTaskCommand(ITaskService taskService, IUserRepository userRepository)
+        {
+            _taskService = taskService;
+            _userRepository = userRepository;
+        }
 
         public void Execute(User currentUser)
         {
-            throw new NotImplementedException();
-        }
+            Console.WriteLine("\n=== Создание новой задачи ===");
 
-        public void Execute()
-        {
-            throw new NotImplementedException();
+            // Ввод данных
+            Console.Write("ID проекта: ");
+            var projectId = Console.ReadLine();
+
+            Console.Write("Название задачи: ");
+            var title = Console.ReadLine();
+
+            Console.Write("Описание: ");
+            var description = Console.ReadLine();
+
+            // Выбор исполнителя
+            Console.WriteLine("\nДоступные сотрудники:");
+            var employees = _userRepository.GetAll()
+                .Where(u => u.Role == Role.Employee)
+                .ToList();
+
+            foreach (var emp in employees)
+            {
+                Console.WriteLine($"{emp.Id}: {emp.Login}");
+            }
+
+            Console.Write("ID исполнителя: ");
+            if (!int.TryParse(Console.ReadLine(), out var assigneeId))
+            {
+                Console.WriteLine("Некорректный ID");
+                return;
+            }
+
+            try
+            {
+                var task = _taskService.CreateTask(projectId, title, description, assigneeId);
+                Console.WriteLine($"\nЗадача создана! ID: {task.Id}");
+                Console.WriteLine($"Проект: {task.ProjectId}");
+                Console.WriteLine($"Исполнитель: {task.AssigneeId}");
+                Console.WriteLine($"Статус: {task.Status}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка: {ex.Message}");
+            }
         }
     }
 }
