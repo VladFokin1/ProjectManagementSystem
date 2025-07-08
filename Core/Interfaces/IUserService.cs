@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Interfaces
 {
-    internal interface ICommand
+    internal interface IUserService
     {
-        string Name { get; }
-        string Description { get; }
-        Role RequiredRole { get; } // Роль, для которой доступна команда
-        void Execute(User currentUser);
+        User Register(string login, string password, Role role);
+        IEnumerable<User> GetAllUsers();
+        User GetUser(int userId);
+        User GetByLogin(string login);
     }
 }

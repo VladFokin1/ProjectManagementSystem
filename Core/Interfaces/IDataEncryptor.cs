@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Interfaces
 {
-    internal interface IPasswordHasher
+    internal interface IDataEncryptor
     {
-        string Hash(string password);
-        bool Verify(string password, string hashedPassword);
+        string Encrypt(string plainText);
+        string Decrypt(string encryptedText);
     }
 }

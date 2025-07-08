@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProjectManagementSystem.Core.Enums
+namespace ProjectManagementSystem.Core.Interfaces
 {
-    internal enum Role
+    internal interface ITaskRepository
     {
-        Employee,
-        Manager,
-        Any
     }
 }

@@ -1,38 +1,172 @@
 ﻿using ProjectManagementSystem.Core.Entities;
+using ProjectManagementSystem.Core.Exceptions;
 using ProjectManagementSystem.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Services
 {
-    internal class JsonUserRepository : IUserRepository
+    internal class JsonUserRepository : IUserRepository, IDisposable
     {
-        public void Add(User user)
+        private readonly string _filePath;
+        private readonly IDataEncryptor _encryptor;
+        private List<User> _users;
+        private readonly object _lock = new object();
+        private bool _disposed;
+        private IPasswordHasher _passwordHasher;
+
+        public JsonUserRepository(string filePath, IDataEncryptor encryptor, IPasswordHasher passwordHasher)
         {
-            throw new NotImplementedException();
+            _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+            _encryptor = encryptor ?? throw new ArgumentNullException(nameof(encryptor));
+            _passwordHasher = passwordHasher;
+
+            InitializeRepository();
+            
         }
 
-        public IEnumerable<User> GetAll()
+        private void InitializeRepository()
         {
-            throw new NotImplementedException();
+
+            try
+            {
+                // Создаем директорию, если не существует
+                var directory = Path.GetDirectoryName(_filePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                if (!File.Exists(_filePath))
+                {
+                    _users = new List<User>();
+
+                    // Создаем файл с пустым массивом
+                    var emptyJson = JsonSerializer.Serialize(_users);
+                    File.WriteAllText(_filePath, _encryptor.Encrypt(emptyJson));
+
+                    // Создаем администратора по умолчанию
+                    var admin = new Manager
+                    {
+                        Id = 1,
+                        Login = "admin",
+                        PasswordHash = _passwordHasher.Hash("admin123") // Хешируем пароль!
+                    };
+
+                    _users.Add(admin);
+                    Save();
+                    return;
+                }
+
+                var encryptedJson = File.ReadAllText(_filePath);
+                var json = _encryptor.Decrypt(encryptedJson);
+                _users = JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
+            }
+            catch (Exception ex)
+            {
+                throw new RepositoryException("Ошибка инициализации репозитория", ex);
+            }
         }
 
         public User GetById(int id)
         {
-            throw new NotImplementedException();
+            lock (_lock)
+            {
+                return _users.FirstOrDefault(u => u.Id == id);
+            }
         }
 
         public User GetByLogin(string login)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(login))
+                return null;
+
+            lock (_lock)
+            {
+                return _users.FirstOrDefault(u =>
+                    string.Equals(u.Login, login, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        public IEnumerable<User> GetAll()
+        {
+            lock (_lock)
+            {
+                // Возвращаем копию для защиты от изменений извне
+                return _users.ToList();
+            }
+        }
+
+        public void Add(User user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            lock (_lock)
+            {
+                // Генерация ID (для простоты, в реальном приложении лучше GUID)
+                user.Id = _users.Count > 0 ? _users.Max(u => u.Id) + 1 : 1;
+                _users.Add(user);
+            }
         }
 
         public void Update(User user)
         {
-            throw new NotImplementedException();
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            lock (_lock)
+            {
+                var existingUser = _users.FirstOrDefault(u => u.Id == user.Id);
+                if (existingUser == null)
+                    throw new KeyNotFoundException($"Пользователь с ID {user.Id} не найден");
+
+                // Обновляем только изменяемые поля
+                existingUser.Login = user.Login;
+                existingUser.PasswordHash = user.PasswordHash;
+
+            }
+        }
+
+        public void Save()
+        {
+            lock (_lock)
+            {
+                try
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    };
+
+                    var json = JsonSerializer.Serialize(_users, options);
+                    var encryptedJson = _encryptor.Encrypt(json);
+
+                    // Atomic write (write to temp file then replace)
+                    var tempFile = Path.GetTempFileName();
+                    File.WriteAllText(tempFile, encryptedJson);
+                    File.Replace(tempFile, _filePath, null);
+                }
+                catch (Exception ex)
+                {
+                    throw new RepositoryException("Ошибка сохранения пользователей", ex);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                Save(); // Сохраняем при завершении
+                _disposed = true;
+            }
         }
     }
 }

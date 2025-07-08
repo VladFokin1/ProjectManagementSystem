@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Entities
 {
+    [Serializable]
     internal class Task
     {
         public int Id { get; set; }

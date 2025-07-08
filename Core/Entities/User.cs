@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Entities
 {
+    [Serializable]
     internal abstract class User
     {
         public int Id { get; set; }
