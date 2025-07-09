@@ -1,14 +1,12 @@
-﻿using ProjectManagementSystem.Core.Interfaces;
+﻿using Microsoft.Extensions.DependencyInjection;
+using ProjectManagementSystem.Core.Entities;
+using ProjectManagementSystem.Core.Enums;
+using ProjectManagementSystem.Core.Exceptions;
+using ProjectManagementSystem.Core.Interfaces;
 using ProjectManagementSystem.Core.Services;
 using ProjectManagementSystem.Infrastructure.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using ProjectManagementSystem.Core.Enums;
-using ProjectManagementSystem.Core.Services.Commands;
-using ProjectManagementSystem.Core.Entities;
-using ProjectManagementSystem.Core.Exceptions;
-using System.Text;
-using Microsoft.Extensions.Hosting;
 using System.Reflection;
+using System.Text;
 
 namespace ProjectManagementSystem
 {
@@ -157,10 +155,11 @@ namespace ProjectManagementSystem
                 var commands = provider.GetServices<ICommand>();
                 return new CommandRegistry(commands);
             });
+
             // Регистрация процессора команд
             services.AddSingleton<CommandProcessor>();
 
-            return services.BuildServiceProvider(); 
+            return services.BuildServiceProvider();
         }
 
         private static string ReadPassword()

@@ -1,13 +1,8 @@
 ﻿using ProjectManagementSystem.Core.Entities;
 using ProjectManagementSystem.Core.Enums;
 using ProjectManagementSystem.Core.Interfaces;
-using Task = ProjectManagementSystem.Core.Entities.Task;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ProjectManagementSystem.Infrastructure.Logging;
+using Task = ProjectManagementSystem.Core.Entities.Task;
 
 namespace ProjectManagementSystem.Core.Services.Commands
 {

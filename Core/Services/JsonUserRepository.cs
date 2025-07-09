@@ -2,13 +2,7 @@
 using ProjectManagementSystem.Core.Exceptions;
 using ProjectManagementSystem.Core.Interfaces;
 using ProjectManagementSystem.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Services
 {
@@ -28,7 +22,7 @@ namespace ProjectManagementSystem.Core.Services
             _passwordHasher = passwordHasher;
 
             InitializeRepository();
-            
+
         }
 
         private void InitializeRepository()
@@ -161,7 +155,7 @@ namespace ProjectManagementSystem.Core.Services
                     {
                         WriteIndented = true,
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        Converters = {new UserConverter() }
+                        Converters = { new UserConverter() }
                     };
 
                     var json = JsonSerializer.Serialize(_users, options);

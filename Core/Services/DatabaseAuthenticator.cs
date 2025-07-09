@@ -2,11 +2,6 @@
 using ProjectManagementSystem.Core.Exceptions;
 using ProjectManagementSystem.Core.Interfaces;
 using ProjectManagementSystem.Infrastructure.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Services
 {

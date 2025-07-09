@@ -1,8 +1,5 @@
 ﻿using ProjectManagementSystem.Core.Exceptions;
 using ProjectManagementSystem.Core.Interfaces;
-using ProjectManagementSystem.Core.Entities;
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using Task = ProjectManagementSystem.Core.Entities.Task;
 
@@ -59,7 +56,7 @@ namespace ProjectManagementSystem.Core.Services
             Save();
         }
 
-        
+
         public IEnumerable<Task> GetByAssignee(int assigneeId)
         {
             return _tasks.Where(t => t.AssigneeId == assigneeId).ToList();

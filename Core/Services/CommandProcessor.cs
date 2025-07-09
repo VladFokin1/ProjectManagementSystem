@@ -1,10 +1,5 @@
 ﻿using ProjectManagementSystem.Core.Entities;
 using ProjectManagementSystem.Core.Services.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace ProjectManagementSystem.Core.Services

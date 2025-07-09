@@ -1,12 +1,9 @@
 ﻿
+using ProjectManagementSystem.Core.Entities;
 using ProjectManagementSystem.Core.Interfaces;
+using ProjectManagementSystem.Infrastructure.Logging;
 using Task = ProjectManagementSystem.Core.Entities.Task;
 using TaskStatus = ProjectManagementSystem.Core.Enums.TaskStatus;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ProjectManagementSystem.Core.Entities;
-using ProjectManagementSystem.Infrastructure.Logging;
 
 namespace ProjectManagementSystem.Core.Services
 {

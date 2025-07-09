@@ -1,14 +1,9 @@
 ﻿using ProjectManagementSystem.Core.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace ProjectManagementSystem.Core.Entities
 {
-    
+
     internal abstract class User
     {
         public int Id { get; set; }
@@ -16,7 +11,7 @@ namespace ProjectManagementSystem.Core.Entities
         public string PasswordHash { get; set; }
         public abstract Role Role { get; }
 
-        public User() {}
+        public User() { }
 
         [JsonConstructor]
         public User(int id, string login, string passwordHash)
