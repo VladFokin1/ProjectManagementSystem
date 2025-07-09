@@ -110,12 +110,15 @@ namespace ProjectManagementSystem.Core.Services.Commands
             {
                 var newUser = _userService.Register(login, password, role);
                 Console.WriteLine($"Пользователь '{newUser.Login}' успешно зарегистрирован!");
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка регистрации пользователя");
                 Console.WriteLine($"Ошибка: {ex.Message}");
             }
+            Console.WriteLine("Нажмите любую кнопку для продолжения...");
+            Console.Read();
         }
 
         private string ReadPassword()

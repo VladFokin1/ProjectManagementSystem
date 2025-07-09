@@ -16,102 +16,101 @@ namespace ProjectManagementSystem
     {
         static void Main(string[] args)
         {
-            var serviceProvider = ConfigureServices();
-            var authenticator = serviceProvider.GetService<IAuthenticator>();
-            var commandProcessor = serviceProvider.GetService<CommandProcessor>();
-            var commandRegistry = serviceProvider.GetService<CommandRegistry>();
-            var logger = serviceProvider.GetService<ILogger>();
-
-            User currentUser = null;
-            logger.LogInformation("Приложение запущено");
-            while (true)
+            using (var serviceProvider = ConfigureServices())
             {
-                try
+                var authenticator = serviceProvider.GetService<IAuthenticator>();
+                var commandProcessor = serviceProvider.GetService<CommandProcessor>();
+                var commandRegistry = serviceProvider.GetService<CommandRegistry>();
+                var logger = serviceProvider.GetService<ILogger>();
+
+                User currentUser = null;
+                logger.LogInformation("Приложение запущено");
+                while (true)
                 {
-                    Console.Clear();
-                    if (currentUser == null)
+                    try
                     {
-                        
-                        Console.WriteLine("=== Система управления задачами ===");
-                        Console.WriteLine("Введите логин и пароль для входа");
-
-                        Console.Write("Логин: ");
-                        var login = Console.ReadLine();
-
-                        Console.Write("Пароль: ");
-                        var password = ReadPassword(); 
-
-                        currentUser = authenticator.Authenticate(login, password);
-
-                        Console.WriteLine($"\nДобро пожаловать, {currentUser.Login}!");
-                        Console.WriteLine($"Ваша роль: {currentUser.Role}");
-                        Console.WriteLine("Нажмите любую клавишу для продолжения...");
-                        Console.ReadKey();
-                    }
-                    else
-                    {
-                        // Отображение меню на основе роли
-                        DisplayMenu(currentUser, commandRegistry);
-
-                        // Обработка команды
-                        Console.Write("\nВведите команду: ");
-                        var commandName = Console.ReadLine();
-
-                        if (string.Equals(commandName, "logout", StringComparison.OrdinalIgnoreCase))
+                        Console.Clear();
+                        if (currentUser == null)
                         {
-                            currentUser = null; // Сбрасываем авторизацию
-                            continue;
-                        }
 
+                            Console.WriteLine("=== Система управления задачами ===");
+                            Console.WriteLine("Введите логин и пароль для входа");
 
-                        if (string.Equals(commandName, "exit", StringComparison.OrdinalIgnoreCase))
-                        {
-                            break;
-                        }
+                            Console.Write("Логин: ");
+                            var login = Console.ReadLine();
 
-                        var command = commandRegistry.GetCommand(commandName);
-                        if (command != null)
-                        {
-                            
+                            Console.Write("Пароль: ");
+                            var password = ReadPassword();
 
-                            // Проверка прав доступа
-                            if (command.RequiredRole != Role.Any &&
-                                command.RequiredRole != currentUser.Role)
-                            {
-                                Console.WriteLine("Недостаточно прав для выполнения команды");
-                            }
-                            else
-                            {
-                                command.Execute(currentUser);
-                            }
+                            currentUser = authenticator.Authenticate(login, password);
+
+                            Console.WriteLine($"\nДобро пожаловать, {currentUser.Login}!");
+                            Console.WriteLine($"Ваша роль: {currentUser.Role}");
+                            Console.WriteLine("Нажмите любую клавишу для продолжения...");
+                            Console.ReadKey();
                         }
                         else
                         {
-                            Console.WriteLine("Неизвестная команда");
+                            // Отображение меню на основе роли
+                            DisplayMenu(currentUser, commandRegistry);
+
+                            // Обработка команды
+                            Console.Write("\nВведите команду: ");
+                            var commandName = Console.ReadLine();
+
+                            if (string.Equals(commandName, "logout", StringComparison.OrdinalIgnoreCase))
+                            {
+                                currentUser = null; // Сбрасываем авторизацию
+                                continue;
+                            }
+
+
+                            if (string.Equals(commandName, "exit", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Console.WriteLine("Выход");
+                                break;
+                            }
+
+                            var command = commandRegistry.GetCommand(commandName);
+                            if (command != null)
+                            {
+
+
+                                // Проверка прав доступа
+                                if (command.RequiredRole != Role.Any &&
+                                    command.RequiredRole != currentUser.Role)
+                                {
+                                    Console.WriteLine("Недостаточно прав для выполнения команды");
+                                }
+                                else
+                                {
+                                    command.Execute(currentUser);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Неизвестная команда");
+                            }
                         }
                     }
-                } 
-                catch (AuthenticationException ex)
-                {
-                    Console.WriteLine($"Ошибка аутентификации: {ex.Message}");
-                    Console.ReadKey();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Произошла непредвиденная ошибка");
-                    logger.LogError(ex, "Непредвиденная ошибка");
-                    Console.ReadKey();
+                    catch (AuthenticationException ex)
+                    {
+                        Console.WriteLine($"Ошибка аутентификации: {ex.Message}");
+                        Console.ReadKey();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Произошла непредвиденная ошибка");
+                        logger.LogError(ex, "Непредвиденная ошибка");
+                        Console.ReadKey();
+                    }
                 }
             }
         }
 
-        private static IServiceProvider ConfigureServices()
+        private static ServiceProvider ConfigureServices()
         {
             var services = new ServiceCollection();
-
-
-
-
 
             // Регистрация зависимостей
             services.AddSingleton<ILogger, FileLogger>();
@@ -123,22 +122,22 @@ namespace ProjectManagementSystem
             services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
             var encryptionKey = Encoding.UTF8.GetBytes("16-char-key-1234"); //хранить так небезопасно
-
             var iv = new byte[16]; // В реальном приложении должен быть уникальным
-
             services.AddSingleton<IDataEncryptor>(new AesDataEncryptor(encryptionKey, iv));
+
             services.AddSingleton<IUserRepository>(provider =>
             {
                 var encryptor = provider.GetRequiredService<IDataEncryptor>();
-                var filePath = "users.json"; 
-                return new JsonUserRepository(filePath, encryptor, provider.GetService<IPasswordHasher>());
+                var hasher = provider.GetRequiredService<IPasswordHasher>();
+                return new JsonUserRepository("users.json", encryptor, hasher);
             });
 
             services.AddSingleton<ITaskRepository>(provider =>
-                new JsonTaskRepository(
-                    "tasks.json", provider.GetRequiredService<IDataEncryptor>(), 
-                    provider.GetService<IPasswordHasher>()
-                    ));
+            {
+                var encryptor = provider.GetRequiredService<IDataEncryptor>();
+                var hasher = provider.GetRequiredService<IPasswordHasher>();
+                return new JsonTaskRepository("tasks.json", encryptor, hasher);
+            });
 
             var commandTypes = Assembly.GetExecutingAssembly()
                                        .GetTypes()
@@ -199,7 +198,8 @@ namespace ProjectManagementSystem
             {
                 Console.WriteLine($"  {command.Name,-15} - {command.Description}");
             }
-            Console.WriteLine("  exit             - Завершить работу");
+            Console.WriteLine("  logout          - Завершить работу");
+            Console.WriteLine("  exit            - Завершить работу");
         }
     }
 }

@@ -68,6 +68,8 @@ namespace ProjectManagementSystem.Core.Services.Commands
             {
                 Console.WriteLine($"Ошибка: {ex.Message}");
             }
+            Console.WriteLine("Нажмите любую кнопку для продолжения...");
+            Console.Read();
         }
     }
 }

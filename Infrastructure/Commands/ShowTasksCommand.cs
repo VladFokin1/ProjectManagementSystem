@@ -46,6 +46,8 @@ namespace ProjectManagementSystem.Core.Services.Commands
                     task.CreatedAt.ToString().PadRight(colWidth)
                 );
             }
+            Console.WriteLine("Нажмите любую кнопку для продолжения...");
+            Console.Read();
         }
     }
 }

@@ -56,6 +56,7 @@ namespace ProjectManagementSystem.Core.Services
         {
             task.Id = _tasks.Count > 0 ? _tasks.Max(t => t.Id) + 1 : 1;
             _tasks.Add(task);
+            Save();
         }
 
         
@@ -118,7 +119,11 @@ namespace ProjectManagementSystem.Core.Services
 
         public void Dispose()
         {
-            Save();
+            if (!_disposed)
+            {
+                Save(); // Сохраняем при завершении
+                _disposed = true;
+            }
         }
 
     }

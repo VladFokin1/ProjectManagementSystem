@@ -27,19 +27,24 @@ namespace ProjectManagementSystem.Core.Services.Commands
             IEnumerable<User> users = _userService.GetAllUsers();
             int colWidth = 20;
             Console.WriteLine(
-                "|{0}|{1}|",
+                "|{0}|{1}|{2}|",
                 "ID".PadRight(colWidth),
-                "Login".PadRight(colWidth)
+                "Login".PadRight(colWidth),
+                "Role".PadRight(colWidth)
             );
 
             foreach (User user in users)
             {
                 Console.WriteLine(
-                    "|{0}|{1}|",
+                    "|{0}|{1}|{2}|",
                     user.Id.ToString().PadRight(colWidth),
-                    user.Login.PadRight(colWidth)
+                    user.Login.PadRight(colWidth),
+                    user.Role.ToString().PadRight(colWidth)
                 );
             }
+            Console.WriteLine("Нажмите любую кнопку для продолжения...");
+            Console.Read();
         }
+        
     }
 }

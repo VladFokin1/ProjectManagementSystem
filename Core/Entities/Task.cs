@@ -16,5 +16,7 @@ namespace ProjectManagementSystem.Core.Entities
         public ProjectManagementSystem.Core.Enums.TaskStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        public Task() { }
     }
 }

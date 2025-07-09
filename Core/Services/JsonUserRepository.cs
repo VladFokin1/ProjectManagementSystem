@@ -1,6 +1,7 @@
 ﻿using ProjectManagementSystem.Core.Entities;
 using ProjectManagementSystem.Core.Exceptions;
 using ProjectManagementSystem.Core.Interfaces;
+using ProjectManagementSystem.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +36,6 @@ namespace ProjectManagementSystem.Core.Services
 
             try
             {
-                // Создаем директорию, если не существует
                 var directory = Path.GetDirectoryName(_filePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
@@ -45,28 +45,44 @@ namespace ProjectManagementSystem.Core.Services
                 if (!File.Exists(_filePath))
                 {
                     _users = new List<User>();
+                    File.WriteAllText(_filePath, _encryptor.Encrypt("[]")); // Пустой массив
 
-                    // Создаем файл с пустым массивом
-                    var emptyJson = JsonSerializer.Serialize(_users);
-                    File.WriteAllText(_filePath, _encryptor.Encrypt(emptyJson));
-
-                    
-                    Save();
+                    // Добавляем администратора
+                    var admin = new Manager
+                    {
+                        Id = 1,
+                        Login = "admin",
+                        PasswordHash = _passwordHasher.Hash("admin123")
+                    };
+                    _users.Add(admin);
+                    Save(); // Сохраняем сразу
                     return;
                 }
 
+                // Читаем существующий файл
                 var encryptedJson = File.ReadAllText(_filePath);
                 var json = _encryptor.Decrypt(encryptedJson);
-                _users = JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
-                // Создаем администратора по умолчанию
-                var admin = new Manager
+                var options = new JsonSerializerOptions
                 {
-                    Id = 1,
-                    Login = "admin",
-                    PasswordHash = _passwordHasher.Hash("admin123") // Хешируем пароль!
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters = { new UserConverter() }
                 };
 
-                _users.Add(admin);
+                _users = JsonSerializer.Deserialize<List<User>>(json, options) ?? new List<User>();
+
+                // Проверяем, есть ли уже администратор
+                if (!_users.Any(u => u.Login == "admin"))
+                {
+                    var admin = new Manager
+                    {
+                        Id = _users.Count + 1,
+                        Login = "admin",
+                        PasswordHash = _passwordHasher.Hash("admin123")
+                    };
+                    _users.Add(admin);
+                    Save();
+                }
             }
             catch (Exception ex)
             {
@@ -113,6 +129,7 @@ namespace ProjectManagementSystem.Core.Services
                 // Генерация ID (для простоты, в реальном приложении лучше GUID)
                 user.Id = _users.Count > 0 ? _users.Max(u => u.Id) + 1 : 1;
                 _users.Add(user);
+                Save();
             }
         }
 
@@ -143,7 +160,8 @@ namespace ProjectManagementSystem.Core.Services
                     var options = new JsonSerializerOptions
                     {
                         WriteIndented = true,
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        Converters = {new UserConverter() }
                     };
 
                     var json = JsonSerializer.Serialize(_users, options);

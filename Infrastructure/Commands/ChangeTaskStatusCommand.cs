@@ -40,8 +40,9 @@ namespace ProjectManagementSystem.Core.Services.Commands
                 "|{0}|{1}|{2}|{3}|",
                 "ID".PadRight(colWidth),
                 "Title".PadRight(colWidth),
+                "Description".PadRight(colWidth),
                 "Status".PadRight(colWidth),
-                "Due Date".PadRight(colWidth)
+                "Created At".PadRight(colWidth)
             );
 
             foreach (Task task in tasks)
@@ -92,8 +93,12 @@ namespace ProjectManagementSystem.Core.Services.Commands
                 var oldStatus = taskToUpdate.Status;
                 _taskService.ChangeTaskStatus(taskToUpdate.Id, newStatus, currentUser);
                 _logger.LogInformation($"Пользователь {currentUser.Login} изменил статус задания с ID={taskToUpdate.Id} изменен с {oldStatus} на {newStatus}");
+                break;
             }
-            
+
+            Console.WriteLine("Нажмите любую кнопку для продолжения...");
+            Console.Read();
+
 
         }
     }
